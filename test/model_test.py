@@ -13,13 +13,13 @@ if __name__ == "__main__":
     checkpoint = torch.load(
         'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar')
     model.load_state_dict(checkpoint['state_dict'])
-    file_mp4 = './TEST_19.mp4'
+    file_mp4 = './TEST_04.mp4'
     video = cv2.VideoCapture(file_mp4)
     success, frame = video.read()
     frame_num = 1
     while (success):
         frame = cv2.resize(frame, (480, 288))
-        cv2.imwrite('./TEST_19/frame' + str(frame_num) + '.png', frame)
+        cv2.imwrite('./TEST_04/frame' + str(frame_num) + '.png', frame)
         img = np.array(frame).astype(np.float32)
         img /= 255.0  # 图片保存都是0~255的数值范围  将数值大小降到[0, 1]
         img -= IMG_MEAN  # [0, 0.5]
@@ -31,6 +31,6 @@ if __name__ == "__main__":
         pred = np.argmax(pred, axis=1).squeeze(axis=0)
         pred = np.expand_dims(pred, axis=2)
         img_seg = np.array(frame).astype(np.float32) * pred
-        cv2.imwrite('./TEST_19/seg' + str(frame_num) + '.png', img_seg)
+        cv2.imwrite('./TEST_04/seg' + str(frame_num) + '.png', img_seg)
         success, frame = video.read()
         frame_num = frame_num + 1

@@ -78,9 +78,9 @@ class DeepLab(nn.Module):
 if __name__ == "__main__":
     model = DeepLab(backbone='mobilenet', output_stride=16)
     model.eval()  # 不启用 BatchNormalization 和 Dropout，保证BN和dropout不发生变化
-    checkpoint = torch.load(
-        'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar')
-    model.load_state_dict(checkpoint['state_dict'])
+    # checkpoint = torch.load(
+    #     'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar')
+    # model.load_state_dict(checkpoint['state_dict'])
     input = torch.rand(1, 3, 288, 480)
     output = model(input)
     print(output.size())
