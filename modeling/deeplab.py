@@ -28,9 +28,9 @@ class DeepLab(nn.Module):
         self.freeze_bn = freeze_bn
 
     def forward(self, input):
-        x, low_level_feat = self.backbone(input)
+        x, low_level_feat, middle_level_feat = self.backbone(input)
         x = self.aspp(x)
-        x = self.decoder(x, low_level_feat)
+        x = self.decoder(x, low_level_feat, middle_level_feat)
         x = F.interpolate(x, size=input.size()[2:], mode='bilinear', align_corners=True)
 
         return x
@@ -76,7 +76,7 @@ class DeepLab(nn.Module):
 
 
 if __name__ == "__main__":
-    model = DeepLab(backbone='mobilenet', output_stride=16)
+    model = DeepLab(backbone='ghostnet', output_stride=16)
     model.eval()  # 不启用 BatchNormalization 和 Dropout，保证BN和dropout不发生变化
     # checkpoint = torch.load(
     #     'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar')
@@ -84,4 +84,4 @@ if __name__ == "__main__":
     input = torch.rand(1, 3, 288, 480)
     output = model(input)
     print(output.size())
-    torch.onnx.export(model, input, 'deeplab_mobilenet.onnx', verbose=True, opset_version=11)
+    # torch.onnx.export(model, input, 'deeplab_mobilenet.onnx', verbose=True, opset_version=11)

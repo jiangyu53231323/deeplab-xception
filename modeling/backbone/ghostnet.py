@@ -214,9 +214,10 @@ class My_GhostNet(nn.Module):
         x3 = self.block3(x2)
         low_level_feat = x3
         x4 = self.block4(x3)
+        middle_level_feat = x4
         x5 = self.block5(x4)
 
-        return x5, low_level_feat
+        return x5, low_level_feat, middle_level_feat
 
 
 def my_ghostnet(output_stride=16, BatchNorm=None):
