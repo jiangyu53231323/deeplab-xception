@@ -13,6 +13,7 @@ def build_backbone(backbone, output_stride, BatchNorm):
     elif backbone == 'ghostnet':
         return ghostnet.my_ghostnet(output_stride)
     elif backbone == 'mobilenetv3':
-        return mobilenet_v3.MobileNetV3_Small()
+        # return mobilenet_v3.MobileNetV3_Small()
+        return mobilenet_v3.MobileNetV3_Large()
     else:
         raise NotImplementedError

@@ -79,13 +79,32 @@ class MobileNetV3_Large(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.hs1 = hswish()
 
-        self.bneck = nn.Sequential(
+        # self.bneck = nn.Sequential(
+        #     Block(3, 16, 16, 16, nn.ReLU(inplace=True), None, 1),
+        #     Block(3, 16, 64, 24, nn.ReLU(inplace=True), None, 2),
+        #     Block(3, 24, 72, 24, nn.ReLU(inplace=True), None, 1),
+        #     Block(5, 24, 72, 40, nn.ReLU(inplace=True), SeModule(40), 2),
+        #     Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+        #     Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+        #     Block(3, 40, 240, 80, hswish(), None, 2),
+        #     Block(3, 80, 200, 80, hswish(), None, 1),
+        #     Block(3, 80, 184, 80, hswish(), None, 1),
+        #     Block(3, 80, 184, 80, hswish(), None, 1),
+        #     Block(3, 80, 480, 112, hswish(), SeModule(112), 1),
+        #     Block(3, 112, 672, 112, hswish(), SeModule(112), 1),
+        #     Block(5, 112, 672, 160, hswish(), SeModule(160), 1),
+        #     Block(5, 160, 672, 160, hswish(), SeModule(160), 2),
+        #     Block(5, 160, 960, 160, hswish(), SeModule(160), 1),
+        # )
+        self.bneck1 = nn.Sequential(
             Block(3, 16, 16, 16, nn.ReLU(inplace=True), None, 1),
-            Block(3, 16, 64, 24, nn.ReLU(inplace=True), None, 2),
+            Block(3, 16, 64, 24, nn.ReLU(inplace=True), None, 1),
             Block(3, 24, 72, 24, nn.ReLU(inplace=True), None, 1),
             Block(5, 24, 72, 40, nn.ReLU(inplace=True), SeModule(40), 2),
             Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
             Block(5, 40, 120, 40, nn.ReLU(inplace=True), SeModule(40), 1),
+        )
+        self.bneck2 = nn.Sequential(
             Block(3, 40, 240, 80, hswish(), None, 2),
             Block(3, 80, 200, 80, hswish(), None, 1),
             Block(3, 80, 184, 80, hswish(), None, 1),
@@ -93,17 +112,19 @@ class MobileNetV3_Large(nn.Module):
             Block(3, 80, 480, 112, hswish(), SeModule(112), 1),
             Block(3, 112, 672, 112, hswish(), SeModule(112), 1),
             Block(5, 112, 672, 160, hswish(), SeModule(160), 1),
+        )
+        self.bneck3 = nn.Sequential(
             Block(5, 160, 672, 160, hswish(), SeModule(160), 2),
             Block(5, 160, 960, 160, hswish(), SeModule(160), 1),
         )
 
-        self.conv2 = nn.Conv2d(160, 960, kernel_size=1, stride=1, padding=0, bias=False)
-        self.bn2 = nn.BatchNorm2d(960)
-        self.hs2 = hswish()
-        self.linear3 = nn.Linear(960, 1280)
-        self.bn3 = nn.BatchNorm1d(1280)
-        self.hs3 = hswish()
-        self.linear4 = nn.Linear(1280, num_classes)
+        # self.conv2 = nn.Conv2d(160, 960, kernel_size=1, stride=1, padding=0, bias=False)
+        # self.bn2 = nn.BatchNorm2d(960)
+        # self.hs2 = hswish()
+        # self.linear3 = nn.Linear(960, 1280)
+        # self.bn3 = nn.BatchNorm1d(1280)
+        # self.hs3 = hswish()
+        # self.linear4 = nn.Linear(1280, num_classes)
         self.init_params()
 
     def init_params(self):
@@ -121,14 +142,18 @@ class MobileNetV3_Large(nn.Module):
                     init.constant_(m.bias, 0)
 
     def forward(self, x):
-        out = self.hs1(self.bn1(self.conv1(x)))
-        out = self.bneck(out)
-        out = self.hs2(self.bn2(self.conv2(out)))
-        out = F.avg_pool2d(out, 7)
-        out = out.view(out.size(0), -1)
-        out = self.hs3(self.bn3(self.linear3(out)))
-        out = self.linear4(out)
-        return out
+        # out = self.hs1(self.bn1(self.conv1(x)))
+        # out = self.bneck(out)
+        # out = self.hs2(self.bn2(self.conv2(out)))
+        # out = F.avg_pool2d(out, 7)
+        # out = out.view(out.size(0), -1)
+        # out = self.hs3(self.bn3(self.linear3(out)))
+        # out = self.linear4(out)
+        out1 = self.hs1(self.bn1(self.conv1(x)))
+        out1 = self.bneck1(out1)
+        out2 = self.bneck2(out1)
+        out3 = self.bneck3(out2)
+        return out3, out2, out1
 
 
 class MobileNetV3_Small(nn.Module):
@@ -171,6 +196,7 @@ class MobileNetV3_Small(nn.Module):
         # self.conv2 = nn.Conv2d(96, 576, kernel_size=1, stride=1, padding=0, bias=False)
         # self.bn2 = nn.BatchNorm2d(576)
         # self.hs2 = hswish()
+        self.init_params()
 
     def init_params(self):
         for m in self.modules():
@@ -197,7 +223,7 @@ class MobileNetV3_Small(nn.Module):
 
 
 def test():
-    net = MobileNetV3_Small()
+    net = MobileNetV3_Large()
     x = torch.randn(2, 3, 288, 480)
     y1, y2, y3 = net(x)
     print(y1.size())

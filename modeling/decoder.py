@@ -18,7 +18,7 @@ class Decoder(nn.Module):
             low_level_inplanes = 40
             middle_level_inplanes = 112
         elif backbone == 'mobilenetv3':
-            low_level_inplanes = 24
+            low_level_inplanes = 40
             middle_level_inplanes = 48
         else:
             raise NotImplementedError
