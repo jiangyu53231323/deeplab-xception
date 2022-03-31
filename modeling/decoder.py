@@ -17,23 +17,26 @@ class Decoder(nn.Module):
         elif backbone == 'ghostnet':
             low_level_inplanes = 40
             middle_level_inplanes = 112
+        elif backbone == 'mobilenetv3':
+            low_level_inplanes = 24
+            middle_level_inplanes = 48
         else:
             raise NotImplementedError
 
         self.conv1 = nn.Conv2d(low_level_inplanes, 48, 1, bias=False)
         self.bn1 = BatchNorm(48)
         self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(middle_level_inplanes, 64, 1, bias=False)
-        self.bn2 = BatchNorm(64)
-        self.relu2 = nn.ReLU()
-        self.middle_conv = nn.Sequential(nn.Conv2d(320, 256, kernel_size=3, stride=1, padding=1, bias=False),
-                                         BatchNorm(256),
-                                         nn.ReLU(),
-                                         nn.Dropout(0.5),
-                                         nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
-                                         BatchNorm(256),
-                                         nn.ReLU(),
-                                         )
+        # self.conv2 = nn.Conv2d(middle_level_inplanes, 64, 1, bias=False)
+        # self.bn2 = BatchNorm(64)
+        # self.relu2 = nn.ReLU()
+        # self.middle_conv = nn.Sequential(nn.Conv2d(320, 256, kernel_size=3, stride=1, padding=1, bias=False),
+        #                                  BatchNorm(256),
+        #                                  nn.ReLU(),
+        #                                  nn.Dropout(0.5),
+        #                                  nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
+        #                                  BatchNorm(256),
+        #                                  nn.ReLU(),
+        #                                  )
         self.last_conv = nn.Sequential(nn.Conv2d(304, 256, kernel_size=3, stride=1, padding=1, bias=False),
                                        BatchNorm(256),
                                        nn.ReLU(),
@@ -49,13 +52,13 @@ class Decoder(nn.Module):
         low_level_feat = self.conv1(low_level_feat)
         low_level_feat = self.bn1(low_level_feat)
         low_level_feat = self.relu(low_level_feat)
-        middle_level_feat = self.conv2(middle_level_feat)
-        middle_level_feat = self.bn2(middle_level_feat)
-        middle_level_feat = self.relu2(middle_level_feat)
+        # middle_level_feat = self.conv2(middle_level_feat)
+        # middle_level_feat = self.bn2(middle_level_feat)
+        # middle_level_feat = self.relu2(middle_level_feat)
         # print('low_level_feat.shape:',low_level_feat.shape)
-        x = F.interpolate(x, size=middle_level_feat.size()[2:], mode='bilinear', align_corners=True)  # 上、下采样操作
-        x = torch.cat((x, middle_level_feat), dim=1)
-        x = self.middle_conv(x)
+        # x = F.interpolate(x, size=middle_level_feat.size()[2:], mode='bilinear', align_corners=True)  # 上、下采样操作
+        # x = torch.cat((x, middle_level_feat), dim=1)
+        # x = self.middle_conv(x)
         x = F.interpolate(x, size=low_level_feat.size()[2:], mode='bilinear', align_corners=True)
         x = torch.cat((x, low_level_feat), dim=1)
         x = self.last_conv(x)
