@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 import os
 
+import cv2
 import torch
 from PIL import Image
 import numpy as np
@@ -85,6 +86,11 @@ class SUPSegmentation(Dataset):
         # 如果不使用.convert(‘RGB’)进行转换的话，读出来的图像是RGBA四通道的，A通道为透明通道，该对深度学习模型训练来说暂时用不到，因此使用convert(‘RGB’)进行通道转换
         _img = Image.open(self.images[index]).convert('RGB')  # 原图像    RGB: 3x8位像素，真彩色
         _mask = Image.open(self.masks[index])  # 标注图像
+        # img_gray = cv2.cvtColor(_img, cv2.COLOR_RGB2GRAY)
+        # blur = cv2.GaussianBlur(img_gray, (3, 3), 0)  # 用高斯滤波处理原图像降噪
+        # canny = cv2.Canny(blur, 50, 150)  # 50是最小阈值,150是最大阈值
+        # canny = np.expand_dims(canny, 2)
+        # _img = np.concatenate((_img, canny), axis=2)
 
         # _img.show()
         # _target.show()

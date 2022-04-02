@@ -48,17 +48,10 @@ class Decoder(nn.Module):
                                        nn.Conv2d(256, num_classes, kernel_size=1, stride=1))
         self._init_weight()
 
-    def forward(self, x, low_level_feat, middle_level_feat):
+    def forward(self, x, low_level_feat):
         low_level_feat = self.conv1(low_level_feat)
         low_level_feat = self.bn1(low_level_feat)
         low_level_feat = self.relu(low_level_feat)
-        # middle_level_feat = self.conv2(middle_level_feat)
-        # middle_level_feat = self.bn2(middle_level_feat)
-        # middle_level_feat = self.relu2(middle_level_feat)
-        # print('low_level_feat.shape:',low_level_feat.shape)
-        # x = F.interpolate(x, size=middle_level_feat.size()[2:], mode='bilinear', align_corners=True)  # 上、下采样操作
-        # x = torch.cat((x, middle_level_feat), dim=1)
-        # x = self.middle_conv(x)
         x = F.interpolate(x, size=low_level_feat.size()[2:], mode='bilinear', align_corners=True)
         x = torch.cat((x, low_level_feat), dim=1)
         x = self.last_conv(x)
