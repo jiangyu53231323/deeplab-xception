@@ -23,17 +23,17 @@ class Normalize(object):
         img = np.array(img).astype(np.float32)
         mask = np.array(mask).astype(np.float32)
 
-        img_gray = np.array(img).astype(np.uint8)
-        img_gray = cv2.cvtColor(img_gray, cv2.COLOR_RGB2GRAY)
-        blur = cv2.GaussianBlur(img_gray, (3, 3), 0)  # 用高斯滤波处理原图像降噪
-        canny = cv2.Canny(blur, 50, 150)  # 50是最小阈值,150是最大阈值
-        canny = np.expand_dims(canny, 2)/255.0
+        # img_gray = np.array(img).astype(np.uint8)
+        # img_gray = cv2.cvtColor(img_gray, cv2.COLOR_RGB2GRAY)
+        # blur = cv2.GaussianBlur(img_gray, (3, 3), 0)  # 用高斯滤波处理原图像降噪
+        # canny = cv2.Canny(blur, 50, 150)  # 50是最小阈值,150是最大阈值
+        # canny = np.expand_dims(canny, 2)/255.0
 
         img /= 255.0  # 图片保存都是0~255的数值范围  将数值大小降到[0, 1]
         img -= self.mean  # [0, 0.5]
         img /= self.std  # [1, 2]
 
-        img = np.concatenate((img, canny), axis=2)
+        # img = np.concatenate((img, canny), axis=2)
 
         return {'image': img,
                 'label': mask}

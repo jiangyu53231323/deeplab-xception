@@ -1,6 +1,7 @@
 import argparse
 import os
 import numpy as np
+from apex import amp
 from tqdm import tqdm
 
 from mypath import Path
@@ -57,7 +58,11 @@ class Trainer(object):
         else:
             weight = None
         self.criterion = SegmentationLosses(weight=weight, cuda=args.cuda).build_loss(mode=args.loss_type)  # 损失函数
+
         self.model, self.optimizer = model, optimizer
+        # apex混合精度训练
+        opt_level = 'O1'
+        self.model, self.optimizer = amp.initialize(self.model.cuda(), self.optimizer, opt_level=opt_level)
 
         # Define Evaluator
         self.evaluator = Evaluator(self.nclass)
@@ -73,6 +78,7 @@ class Trainer(object):
             # output_device这个参数表示输出结果的device；而这最后一个参数output_device一般情况下是省略不写的，那么默认就是在device_ids[0]，也就是第一块卡上，也就解释了为什么第一块卡的显存会占用的比其他卡要更多一些。
             patch_replication_callback(self.model)
             self.model = self.model.cuda()
+
 
         # Resuming checkpoint 恢复ckpt文件保存的上次训练的权重
         self.best_pred = 0.0
@@ -111,7 +117,11 @@ class Trainer(object):
             # print(output.shape)  # torch.Size([4, 8, 513, 513])
             # print(target.shape)  # torch.Size([4, 513, 513])
             loss = self.criterion(output, target)
-            loss.backward()
+
+            with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+                scaled_loss.backward()
+
+            # loss.backward()
             self.optimizer.step()
             train_loss += loss.item()
             tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
@@ -134,6 +144,7 @@ class Trainer(object):
                 'state_dict': self.model.module.state_dict(),  # 返回一个包含模型状态信息的字典 将每层与层的参数张量之间一一映射
                 'optimizer': self.optimizer.state_dict(),  # 包含的是关于优化器状态的信息和使用到的超参数
                 'best_pred': self.best_pred,
+                'amp': amp.state_dict(),
             }, is_best)
 
     def validation(self, epoch):
@@ -180,6 +191,7 @@ class Trainer(object):
                 'state_dict': self.model.module.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'best_pred': self.best_pred,
+                'amp': amp.state_dict(),
             }, is_best)
 
 
@@ -218,7 +230,7 @@ def main():
                         help='number of epochs to train (default: auto)')
     parser.add_argument('--start_epoch', type=int, default=0,
                         metavar='N', help='start epochs (default:0)')
-    parser.add_argument('--batch-size', type=int, default=4,
+    parser.add_argument('--batch-size', type=int, default=8,
                         metavar='N', help='input batch size for \
                                 training (default: auto)')  # 每批数据量的大小。一次（1个iteration）一起训练batchsize个样本，计算它们的平均损失函数值，来更新参数
     # batchsize越小，一个batch中的随机性越大，越不易收敛。
