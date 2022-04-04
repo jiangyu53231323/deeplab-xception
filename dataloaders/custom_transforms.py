@@ -107,7 +107,7 @@ class RandomScaleCrop(object):  # 随机裁剪
         img = sample['image']
         mask = sample['label']
         # random scale (short edge)
-        short_size = random.randint(int(self.base_size * 0.7), int(self.base_size * 1.3))  # 返回 [257, 1026] 之间的任意整数  644
+        short_size = random.randint(int(self.base_size * 0.8), int(self.base_size * 1.2))  # 返回 [257, 1026] 之间的任意整数  644
         w, h = img.size  # h:1024  w:1024 原图的尺寸大小
         if h > w:
             ow = short_size  # ow：644
