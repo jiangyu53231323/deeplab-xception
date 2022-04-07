@@ -39,7 +39,10 @@ import zipfile
 from pathlib import Path
 from typing import List, Tuple
 
+from onnx import load_model, save_model
+from onnxmltools.utils import float16_converter
 import torch
+import nncf
 import torch.nn as nn
 import torch.utils.data
 import torchvision.datasets as datasets
@@ -51,7 +54,8 @@ from nncf.common.utils.logger import set_log_level
 from torch.utils.data import DataLoader
 
 set_log_level(logging.ERROR)  # Disables all NNCF info and warning messages
-from nncf.torch import create_compressed_model, register_default_init_args
+# from nncf.torch import create_compressed_model, register_default_init_args
+
 # from openvino.runtime import Core
 from torch.jit import TracerWarning
 
@@ -343,39 +347,42 @@ if __name__ == '__main__':
     model = DeepLab(backbone='mobilenet', output_stride=16)
     model.eval()  # 不启用 BatchNormalization 和 Dropout，保证BN和dropout不发生变化
     checkpoint = torch.load(
-        'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar',
-        map_location='cpu')
+        'E:\\Project\\python_project\\deeplab-xception\\run\\supervisely\\deeplab-mobilenet\\model_best.pth.tar')
     model.load_state_dict(checkpoint['state_dict'])
     input = torch.rand(1, 3, 288, 480)
     output = model(input)
     print(output.size())
-    # torch.onnx.export(model, input, 'deeplab_mobilenetv3.onnx', verbose=True, opset_version=11)
+    torch.onnx.export(model, input, 'deeplab_mobilenet.onnx', verbose=True, opset_version=11)
+    onnx_model = load_model('deeplab_mobilenet.onnx')
+    trans_model = float16_converter.convert_float_to_float16(onnx_model)
+    save_model(trans_model, "deeplab_mobilenet_fp16.onnx")
 
-    nncf_config_dict = {
-        "input_info": {"sample_size": [1, 3, *IMAGE_SIZE]},
-        "log_dir": str(OUTPUT_DIR),
-        "compression": {
-            "algorithm": "quantization",
-            "initializer": {
-                "range": {"num_init_samples": 15000},
-                "batchnorm_adaptation": {"num_bn_adaptation_samples": 4000},
-            },
-        },
-    }
 
-    nncf_config = NNCFConfig.from_dict(nncf_config_dict)
+    # nncf_config_dict = {
+    #     "input_info": {"sample_size": [1, 3, *IMAGE_SIZE]},
+    #     "log_dir": str(OUTPUT_DIR),
+    #     "compression": {
+    #         "algorithm": "quantization",
+    #         "initializer": {
+    #             "range": {"num_init_samples": 15000},
+    #             "batchnorm_adaptation": {"num_bn_adaptation_samples": 4000},
+    #         },
+    #     },
+    # }
 
-    nncf_config = register_default_init_args(nncf_config, train_loader)
+    # nncf_config = NNCFConfig.from_dict(nncf_config_dict)
 
-    compression_ctrl, model = create_compressed_model(model, nncf_config)
+    # nncf_config = register_default_init_args(nncf_config, train_loader)
+
+    # compression_ctrl, model = create_compressed_model(model, nncf_config)
 
     # acc1 = validate(val_loader, model)
     # print(f"Accuracy of initialized INT8 model: {acc1:.3f}")
 
-    warnings.filterwarnings("ignore", category=TracerWarning)  # Ignore export warnings
-    warnings.filterwarnings("ignore", category=UserWarning)
-    compression_ctrl.export_model(int8_onnx_path)
-    print(f"INT8 ONNX model exported to {int8_onnx_path}.")
+    # warnings.filterwarnings("ignore", category=TracerWarning)  # Ignore export warnings
+    # warnings.filterwarnings("ignore", category=UserWarning)
+    # compression_ctrl.export_model(int8_onnx_path)
+    # print(f"INT8 ONNX model exported to {int8_onnx_path}.")
 
     # input_shape = [1, 3, *IMAGE_SIZE]
     # if not fp32_ir_path.exists():
